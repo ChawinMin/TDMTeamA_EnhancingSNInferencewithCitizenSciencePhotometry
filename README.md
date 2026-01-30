@@ -1,0 +1,1 @@
+# TDMTeamA_EnhancingSNInferencewithCitizenSciencePhotometry
