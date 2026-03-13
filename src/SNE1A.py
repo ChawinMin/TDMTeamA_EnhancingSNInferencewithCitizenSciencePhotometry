@@ -1,7 +1,5 @@
-# In this example, we show how one can use models implemented in sncosmo to fit data/or plot lightcurves.
-# There is a general interface in redback that provides a redback-friendly interface to all models in sncosmo.
-
 import bilby
+from bilby.core.prior import Uniform
 import redback
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,12 +11,15 @@ client = Alerce()
 
 # Let's first plot the salt2 model using the redback interface
 
+'''
 # We first set up the parameters for the model.
 sncosmo_model = 'salt2' #must be the same as the sncosmo registered model name
 redshift = 0.1
 start_time = 55570
 time = np.linspace(0.1, 65, 100) + start_time
+'''
 
+'''
 
 # We set up a dictionary for any kwargs required by redback.
 # These are similar to the kwargs required by other redback models
@@ -49,7 +50,7 @@ plt.show()
 
 # Now that we can see the model works. Let's try to fit some data.
 # Let's fit some data to a ztf data
-transient = 'ZTF22abfrbzi'
+transient = 'ZTF22aalrcmn'
 #data = redback.get_data.get_lasair_data(transient=transient, transient_type='supernova')
 data = client.query_detections(transient, format='json', survey= 'ztf')
 df = pd.DataFrame(data)
@@ -109,12 +110,15 @@ try:
   plt.xlabel('MJD')
   plt.ylabel('Magnitude')
   plt.show()
+  
+  fig = result.plot_corner()
+  fig.suptitle(f'SNCOSMO Fit Corner Plot for {transient}')
 
 except PermissionError as e:
     print(f"PermissionError: {e}. This error can occur if the output directory already exists and is not empty. Please check the 'fit_model/{transient}' directory and ensure it is empty or choose a different output directory.")
 except Exception as e:
     print(f"An error occurred: {e}. Please check the error message for more details.")
-
+'''
 
 
 '''
@@ -131,25 +135,23 @@ user-friendly interface for the salt2 model.
 //////////////////////////////////////////////////////////////////////////////
 '''
 
-# Congratulations, you now have a nice fit with the SNCOSMO salt2 model through redback.
-
 # The above was the general SNCOSMO models interface, we also provide a specific interface for the salt2 model.
 # This is similar to the interface for other redback models. e.g.,
-
-# You would call the model as:
 
 redshift = 0.1
 start_time = 55570
 time = np.linspace(0.1, 65, 100) + start_time
+f_ni = 0.2 #Uniform(0.001, 1, 'f_nickel', latex_label = r'$f_{\mathrm{Ni}}$')
+m_ej = 1.1 #Uniform(0.01, 2, 'mej', latex_label = r'$M_{\mathrm{ej}}~(M_\odot)$')
 
-kwargs = {'output_format': 'magnitude', 'bands':'ztfr'}
-outs = redback.transient_models.supernova_models.salt2(time=time, redshift=redshift, x0=1e-7, x1=0.9, c=0.3, peak_time=55589, **kwargs)
+kwargs = {'output_format': 'magnitude', 'bands':'ztfr', 'kappa': 0.05, 'kappa_gamma': 0.027, 'vej': 1e3, 'temperature_floor': 3000}
+outs = redback.transient_models.supernova_models.type_1a(time=time, redshift=redshift, x0=1e-7, x1=0.9, c=0.3, peak_time=55589, f_nickel=f_ni, mej=m_ej, **kwargs)
 
 # Where outs is just an array of magnitudes.
 
 # You can fit with this model as you do with other redback models e.g.,
 
-transient = 'ZTF22abfrbzi'
+transient = 'ZTF22aalrcmn'
 #data = redback.get_data.get_lasair_data(transient=transient, transient_type='supernova')
 data = client.query_detections(transient, format='json')
 df = pd.DataFrame(data)
@@ -188,16 +190,15 @@ kwargs = {'bands': sn.filtered_sncosmo_bands, 'output_format': 'magnitude'}
 try:
   # Let's fit. Again the interface is similar to the normal interface for redback.
   result = redback.fit_model(transient=sn, model='salt2', prior=priors, model_kwargs=kwargs,
-                            sampler='dynesty', nlive=100, plot=False, clean=True, outdir= f'salt2_fit_model/{transient}')
+                            sampler='dynesty', nlive=100, plot=False, clean=True, outdir= f'Type_Ia/{transient}')
 
   ax = result.plot_lightcurve(random_models=50, show=False)
   ax.set_xscale('linear')
-  ax.set_yscale('linear')
-  plt.legend()
-  plt.title(f'Salt2 Fit to {transient}')
-  plt.xlabel('MJD')
-  plt.ylabel('Magnitude')
-  plt.show()
+  ax.set_yscale('linear')  
+  
+  fig = result.plot_corner()
+  fig.suptitle(f'SNCOSMO Fit Corner Plot for {transient}')
+  
 except PermissionError as e:
     print(f"PermissionError: {e}. This error can occur if the output directory already exists and is not empty. Please check the 'salt2_fit_model/{transient}' directory and ensure it is empty or choose a different output directory.")
 except Exception as e:
